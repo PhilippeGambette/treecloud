@@ -5,7 +5,7 @@
 #####################################################
 # Copyright 2008-2009 Philippe Gambette
 # 
-# This file is part of TreeCloud v1.2 (09/06/2009).
+# This file is part of TreeCloud v1.3 (13/12/2009).
 #
 # TreeCloud is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

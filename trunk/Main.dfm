@@ -339,8 +339,11 @@ object Form1: TForm1
       'target'
       'Words in the tree cloud:'
       'Open a word list'
-      'Colors of words in the tree cloud:'
-      'Open a color list')
+      'Word sizes:'
+      'Open size list'
+      'Word colors:'
+      'Open color list'
+      'Command line:')
     PlainText = True
     TabOrder = 3
     Visible = False
