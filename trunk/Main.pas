@@ -125,7 +125,10 @@ end;
 
 
 procedure TForm1.LoadLanguage(TheLanguage: TRichEdit; Sender: TObject);
+var
+num:integer;
 begin
+   num:=ColorChoice.ItemIndex;
    Lang.lines:=TheLanguage.Lines;
    Memo1.lines.clear;
    Memo1.lines[0]:=lang.Lines[0];
@@ -158,7 +161,8 @@ begin
    OpenSizes.Caption:=lang.lines[26];
    TexteColorList.Caption:=lang.lines[27];
    OpenColors.Caption:=lang.lines[28];
-   Label1.Caption:=lang.lines[29];   
+   Label1.Caption:=lang.lines[29];
+   ColorChoice.ItemIndex:=num;
    Timer1Timer(Sender)
 end;
 
@@ -247,7 +251,7 @@ else
      ComputeTreecloud.enabled:=true;
 
 If fileexists(stoplist.Text) then
-     thestoplist:=' stoplist='+stoplist.Text;
+     thestoplist:=' stoplist="'+stoplist.Text+'"';
 if LengthChoice.ItemIndex=0 then
      theedgelength:='1'
 else
@@ -271,7 +275,7 @@ if colorchoice.ItemIndex=5 then
 else
      colorname:=ColorChoice.Items[colorchoice.ItemIndex];
 
-command.lines.add('"'+PythonPath.text+'" '+extractfilepath(application.ExeName)+'Treecloud.py'
+command.lines.add('"'+PythonPath.text+'" "'+extractfilepath(application.ExeName)+'Treecloud.py"'
               +thestoplist
               +' splitstreepath="'+SplitsTreePath.Text
               +'" unit='+theedgelength
