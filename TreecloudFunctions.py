@@ -8,9 +8,9 @@ from math import *
 #=====================#
 
 #####################################################
-# Copyright 2008-2009 Philippe Gambette
+# Copyright 2008-2023 Philippe Gambette
 # 
-# This file is part of TreeCloud v1.3 (13/12/2009).
+# This file is part of TreeCloud v1.5beta (13/04/2023).
 #
 # TreeCloud is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,9 +35,12 @@ from math import *
 def removePunct(line):
         new_string = ''
         for char in line:
-                if char in string.punctuation:
-                        new_string = new_string+" "
+                if char=="_":
+                    new_string = new_string+char
                 else :
+                    if char in string.punctuation:
+                        new_string = new_string+" "
+                    else :
                         new_string = new_string+char
         return new_string
 
@@ -99,7 +102,7 @@ def openText(filename,sepchar):
                                 text.append(word)
                                 if word!=sepchar:
                                         i+=1
-                                        if wordlist.has_key(word):
+                                        if word in wordlist:
                                                 wordlist[word]+=1
                                         else:
                                                 wordlist[word]=1
@@ -150,8 +153,8 @@ def openMatrix(filename):
              else :
                  realmatrixrow.append(float(matrix[i][j]))
           realmatrix.append(realmatrixrow)
-        print realmatrix
-        print names
+        print(realmatrix)
+        print(names)
         fd.close()
         result=[]
         result.append(names)
@@ -173,15 +176,67 @@ def openDict(filename):
         return result
 
 
+# Open a dict stored in a csv file and returns a dict
+# * filename: string
+def createConcordance(text,filename,left,right):
+        fd = open(filename,"r")
+        output = open(filename+"conc.txt","w")
+        lines = fd.readlines()
+        result={}
+        mode=1;
+        
+        if mode==1:
+        # for each word in the file, find its concordances, one after the other
+           for line in lines:
+             res=re.search("(.*$)",line.lower())
+             if res:
+                   word=res.group(1)
+                   print("Looking for -"+word+"-")
+                   for i in range(0,len(text)):
+                       if text[i]==word:
+                            chaine=""
+                            j=i-left
+                            if j<0:
+                                j=0
+                            while (j<i+right+1) and (j<len(text)):
+                                chaine=chaine+" "+text[j]
+                                j=j+1
+                            print(chaine)
+                            output.writelines(chaine+" aaaaa\n")
+        else:
+        # find the concordances in the text of all words, following their order of appearance
+           allWords=[]
+           for line in lines:
+             res=re.search("(.*$)",line.lower())
+             if res:
+                   word=res.group(1)
+                   allWords.append(word)
+                   
+           for i in range(0,len(text)):
+             for word in allWords:
+                       if text[i]==word:
+                            chaine=""
+                            j=i-left
+                            if j<0:
+                                j=0
+                            while (j<i+right+1) and (j<len(text)):
+                                chaine=chaine+" "+text[j]
+                                j=j+1
+                            print(chaine)
+                            output.writelines(chaine+" aaaaa\n")
+        fd.close()
+        output.close()
+        return result
+
 # Returns a dict freqs, which associates for any n (in decreasing order):
 # a dict of all words which appeared n times
 def sortByFrequency(wordlist):
         freqs={}
-        words=wordlist.keys()
+        words=list(wordlist.keys())
         words.sort()
         for word in words:
             val=wordlist[word]
-            if freqs.has_key(val):
+            if val in freqs:
                 freqs[val][word]=1
             else :
                 freqs[val]={}
@@ -210,16 +265,16 @@ def loadStoplist(stoplistfile):
 # * stoplist is a table containing loaded stopwords
 # * filename is a string
 def saveFrequencies(freqs,stoplist,filename):
-        frequencies=freqs.keys()
+        frequencies=list(freqs.keys())
         frequencies.sort()
         j=len(frequencies)-1
         freqoutput = open(filename,"w")
         
         while j>=0:
-                theseWords=freqs[frequencies[j]].keys()
+                theseWords=list(freqs[frequencies[j]].keys())
                 k=0
                 while k<len(theseWords):
-                        if not(stoplist.has_key(theseWords[k])):
+                        if not(theseWords[k] in stoplist):
                                 freqoutput.writelines(theseWords[k]+";"+str(frequencies[j])+"\n")
                         k+=1
                 j+=-1        
@@ -244,15 +299,15 @@ def wordList(freqs,stoplist,minnb,nbwords,sepchar):
         keptWordsId={}
         keptWords=[]
         keptWordsFrequencies=[]
-        frequencies=freqs.keys()
+        frequencies=list(freqs.keys())
         frequencies.sort()
         j=len(frequencies)-1
         i=0
         while (j>=0) and (frequencies[j]>=minnb):
-                theseWords=freqs[frequencies[j]].keys()
+                theseWords=list(freqs[frequencies[j]].keys())
                 k=0
                 while k<len(theseWords):
-                        if (theseWords[k]!=sepchar) and (not(stoplist.has_key(theseWords[k])) and (i<nbwords)):
+                        if (theseWords[k]!=sepchar) and (not(theseWords[k] in stoplist) and (i<nbwords)):
                                 keptWordsId[theseWords[k]]=i
                                 keptWordsFrequencies.append(frequencies[j])
                                 #print theseWords[k]
@@ -283,7 +338,7 @@ def imposedWordList(freqs,thekeptwords,sepchar):
         keptWordsId={}
         keptWords=[]
         keptWordsFrequencies=[]
-        frequencies=freqs.keys()
+        frequencies=list(freqs.keys())
         frequencies.sort()
         j=len(frequencies)-1
         i=0
@@ -292,7 +347,7 @@ def imposedWordList(freqs,thekeptwords,sepchar):
                 k=0
                 while k<len(theseWords):
                         #print theseWords[k]
-                        if (theseWords[k]!=sepchar) and thekeptwords.has_key(theseWords[k]):
+                        if (theseWords[k]!=sepchar) and (theseWords[k] in thekeptwords):
                                 keptWordsId[theseWords[k]]=i
                                 keptWordsFrequencies.append(frequencies[j])
                                 #print theseWords[k],i,frequencies[j]
@@ -318,7 +373,7 @@ def imposedWordList(freqs,thekeptwords,sepchar):
 def filterText(text,keptWordsId,sepchar):
         i=0
         while i<len(text):
-                if not(keptWordsId.has_key(text[i])):
+                if not(text[i] in keptWordsId):
                         if text[i]!=sepchar:
                                text[i]=""
                 i+=1
@@ -409,11 +464,11 @@ def computeCooccurrence(text,keptWordsId,winSize,step):
                         #the end of sliding window has not reached the end of the text yet
                         #------------------------------
                         if text[i]!="":
-                                if window.has_key(text[i]):
+                                if text[i] in window:
                                         window[text[i]]+=1
                                 else:
                                         window[text[i]]=1
-                if i>winSize:
+                if i>=winSize:
                 #------------------------------
                 #the beginning of the sliding window has not reached the beginning of the text yet
                 #------------------------------
@@ -425,14 +480,16 @@ def computeCooccurrence(text,keptWordsId,winSize,step):
                 #------------------------------
                 #update the cooccurrence matrix by using all words in the window
                 #------------------------------
+				# window currently contains all the words in the window, as well as their number of occurrences in the window                
                 if i % step==0:
-                        windowWords=window.keys();
+                        windowWords=list(window.keys());
                         j=0;
                         while j<len(windowWords):
                                 k=j+1;
                                 posj=keptWordsId[windowWords[j]]
                                 if window[windowWords[j]]>0:
                                         #print windowWords[j],freqWin[posj],keptWordsFrequencies[posj]
+										#this window contains the j-th word                                        
                                         freqWin[posj]+=1
 
                                 while k<len(windowWords):
@@ -506,7 +563,7 @@ def computeCooccurrenceDisjoint(text,keptWordsId,sepchar):
                        #update the cooccurrence matrix by using all words in the window
                        #------------------------------
                         winnb+=1
-                        windowWords=window.keys();
+                        windowWords=list(window.keys());
                         #print winnb,"cooccurrence windows found.",len(windowWords),i
                         j=0;
                         while j<len(windowWords):
@@ -526,7 +583,7 @@ def computeCooccurrenceDisjoint(text,keptWordsId,sepchar):
                 i+=1;
         if text[i-1]!=sepchar:
                         winnb+=1
-                        windowWords=window.keys();
+                        windowWords=list(window.keys());
                         j=0;
                         while j<len(windowWords):
                                 k=j+1;
@@ -541,9 +598,9 @@ def computeCooccurrenceDisjoint(text,keptWordsId,sepchar):
                                         k+=1;
                                 j+=1
         if winnb>1:
-                print winnb,"cooccurrence windows found."
+                print(winnb,"cooccurrence windows found.")
         else:
-                print winnb,"cooccurrence window found."
+                print(winnb,"cooccurrence window found.")
         j=0
         while j<len(freqWin):
                 k=0;
@@ -778,11 +835,12 @@ def exportToNexus(distance,keptWords,exportfilename,unit):
         nexusoutput.writelines(" \n");
         nexusoutput.writelines("BEGIN st_Assumptions;\n");
         nexusoutput.writelines("	disttransform=NJ;\n");
+        #nexusoutput.writelines("	disttransform=NeighborNet Variance = OrdinaryLeastSquares Threshold = 1.0E-6;\n");
         nexusoutput.writelines("	treestransform=TreeSelector;\n");
         if unit==1:
-                nexusoutput.writelines("	splitstransform=EqualAngle UseWeights = false RunConvexHull = true DaylightIterations = 0 OptimizeBoxesIterations = 0 SpringEmbedderIterations = 0;\n");
+                nexusoutput.writelines("	splitstransform=EqualAngle UseWeights=false RunConvexHull=true DaylightIterations=0 OptimizeBoxesIterations=5 SpringEmbedderIterations=0;\n");
         else:
-                nexusoutput.writelines("	splitstransform=EqualAngle UseWeights = true;\n");
+                nexusoutput.writelines("	splitstransform=EqualAngle UseWeights=true  RunConvexHull=true DaylightIterations=0 OptimizeBoxesIterations=5 SpringEmbedderIterations=0;\n");
         nexusoutput.writelines("	SplitsPostProcess filter=dimension value=4;\n");
         nexusoutput.writelines("	autolayoutnodelabels;\n");
         nexusoutput.writelines("END; [st_Assumptions]\n");
@@ -937,7 +995,7 @@ def RFsimilarity(splits1,splits2):
 # * keptWords contains a string list
 def splitsFromNewick(string,keptWords):
         splits=[]
-        nbwords=len(keptWords.keys())
+        nbwords=len(list(keptWords.keys()))
         if string[0]=="(":
                 subtrees=findSubtrees(string)
                 nbSubtree=0
@@ -956,7 +1014,7 @@ def splitsFromNewick(string,keptWords):
                 res=re.search("([^:]+):.*",string)
                 split=[]
                 if res: 
-                        if keptWords.has_key(res.group(1)):
+                        if res.group(1) in keptWords:
                                 wordid=keptWords[res.group(1)]
                                 for i in range(0,nbwords):
                                         if i==wordid:
@@ -1016,17 +1074,18 @@ def levelToFont(level,color):
         "'Arial-PLAIN-17' lc=231 98 0",
         "'Arial-PLAIN-18' lc=255 51 0"]
         if color=="berry":
-                levels=["'Arial-PLAIN-8' lc=223 223 223",
-        "'Arial-PLAIN-9' lc=184 214 201",
-        "'Arial-PLAIN-10' lc=102 168 138",
-        "'Arial-PLAIN-11' lc=71 123 123",
-        "'Arial-PLAIN-12' lc=231 101 0",
-        "'Arial-PLAIN-13' lc=231 98 0",
-        "'Arial-PLAIN-14' lc=231 98 0",
-        "'Arial-PLAIN-15' lc=231 98 0",
-        "'Arial-PLAIN-16' lc=231 98 0",
-        "'Arial-PLAIN-17' lc=231 98 0",
-        "'Arial-PLAIN-18' lc=255 51 0"]
+                levels=["'Arial-PLAIN-8' lc=220 220 220",
+        "'Arial-PLAIN-9' lc=200 200 200",
+        "'Arial-PLAIN-10' lc=180 180 180",
+        "'Arial-PLAIN-11' lc=160 160 160",
+        "'Arial-PLAIN-12' lc=140 140 140",
+        "'Arial-PLAIN-13' lc=120 120 120",
+        "'Arial-PLAIN-14' lc=70 70 70",
+        "'Arial-PLAIN-15' lc=50 50 50",
+        "'Arial-PLAIN-16' lc=30 30 30",
+        "'Arial-PLAIN-17' lc=20 20 20",
+        "'Arial-PLAIN-18' lc=0 0 0"]
+        
         return levels[level]
         
         
@@ -1045,7 +1104,7 @@ def computeAveragePositions(text,keptWordsId):
         for i in range(0,len(text)):
              word=text[i]
              if word!="":
-                  if numberfound.has_key(word):
+                  if word in numberfound:
                        nbfound=numberfound[word]
                        positions[word]=(positions[word]*nbfound+i*255.0/len(text))/(nbfound+1)
                        numberfound[word]=nbfound+1
@@ -1059,7 +1118,7 @@ def computeAveragePositions(text,keptWordsId):
         for i in range(0,len(text)):
              word=text[i]
              if word!="":
-                  if numberfound2.has_key(word):
+                  if word in numberfound2:
                        nbfound=numberfound2[word]
                        difference=(i*255.0/len(text)-positions[word])
                        dispersion[word]=(dispersion[word]*nbfound+difference*difference)/(nbfound+1)
@@ -1076,7 +1135,7 @@ def computeAveragePositions(text,keptWordsId):
         themaxp=0.0
         themind=256*256
         themaxd=0.0
-        words=positions.keys()
+        words=list(positions.keys())
         
         for items in words:
              themaxp=max(themaxp,positions[items])
@@ -1086,7 +1145,7 @@ def computeAveragePositions(text,keptWordsId):
              
         themaxd=sqrt(themaxd)
         themind=sqrt(themind)
-        words=positions.keys()
+        words=list(positions.keys())
         if themaxp>theminp:
              for items in words:
                   positions[items]=((positions[items])-theminp)*255.0/(themaxp-theminp)
@@ -1111,9 +1170,9 @@ def computeCooccurrenceColors(theword,text,keptWordsId,distance):
         themin=distance[0][1]
         themax=themin
         
-        keptWords=keptWordsId.keys();
+        keptWords=list(keptWordsId.keys());
         for word in keptWords:
-                  if not(positions.has_key(word)):
+                  if not(word in positions):
                        value=distance[keptWordsId[theword]][keptWordsId[word]]
                        positions[word]=value
                        themax=max(value,themax)
@@ -1170,7 +1229,7 @@ def onlyLevelToFont(level):
 def colorNexus(keptWordsId,keptWordsFrequencies,filename,text,color,customcolor,customsize,distance,dendropath):
         edgecolor="204 204 255"
         if color=="berry":
-                edgecolor="204 255 204"
+                edgecolor="230 230 230"
         colorok=0
         sizeok=0
                 
@@ -1231,22 +1290,31 @@ def colorNexus(keptWordsId,keptWordsFrequencies,filename,text,color,customcolor,
                                        averagepos2=str(max(0,int(floor(255-dispersion[res.group(2)]*255.0/100))))
 
                                 if dendropath=="":
+                                       #blue/red colors
                                        nexusoutput.writelines(res.group(1)+" f="+onlyLevelToFont(int(1+9.99999*(log(keptWordsFrequencies[keptWordsId[res.group(2)]])-log(themin))/(log(themax)-log(themin))))+" lc="+averagepos2+" "+"0"+" "+averagepos+",\n")
+                                       #inverted gray level
+                                       #nexusoutput.writelines(res.group(1)+" f="+onlyLevelToFont(int(1+9.99999*(log(keptWordsFrequencies[keptWordsId[res.group(2)]])-log(themin))/(log(themax)-log(themin))))+" lc="+str(int(floor((200*(255-int(averagepos2)))/255)))+" "+str(int(floor((200*(255-int(averagepos2)))/255)))+" "+str(int(floor((200*(255-int(averagepos2)))/255)))+",\n")
+                                       #gray level
+                                       #nexusoutput.writelines(res.group(1)+" f="+onlyLevelToFont(int(1+9.99999*(log(keptWordsFrequencies[keptWordsId[res.group(2)]])-log(themin))/(log(themax)-log(themin))))+" lc="+str(int(floor((200*int(averagepos2))/255)))+" "+str(int(floor((200*int(averagepos2))/255)))+" "+str(int(floor((200*int(averagepos2))/255)))+",\n")
                                 else :
                                        nexusoutput.writelines("deselect nodes;\n");
                                        nexusoutput.writelines("select taxa="+res.group(2)+";\n")
+                                       #colored chronology
                                        nexusoutput.writelines("set labelcolor="+averagepos2+" "+"0"+" "+averagepos+";\n")
+                                       #gray level chronology
+                                       #nexusoutput.writelines("set labelcolor="+averagepos2+" "+"0"+" "+averagepos2+";\n")
                                        nexusoutput.writelines("set font="+onlyLevelToFont(int(1+9.99999*(log(keptWordsFrequencies[keptWordsId[res.group(2)]])-log(themin))/(log(themax)-log(themin))))+";\n")
+
                         else:
                                 fontpluscolor=re.search("([^ ]+) lc=(.*)",levelToFont(int(1+9.99999*(log(keptWordsFrequencies[keptWordsId[res.group(2)]])-log(themin))/(log(themax)-log(themin))),color))
                                 if fontpluscolor:
                                        chosenSize=fontpluscolor.group(1)
                                        chosenColor=fontpluscolor.group(2)
                                        if colorok==1:
-                                              if customColorDic.has_key(res.group(2)):
+                                              if (res.group(2) in customColorDic):
                                                       chosenColor=customColorDic[res.group(2)]
                                        if sizeok==1:
-                                              if customSizeDic.has_key(res.group(2)):
+                                              if res.group(2) in customSizeDic:
                                                       chosenSize=customSizeDic[res.group(2)]
                                               
                                        if dendropath=="":
